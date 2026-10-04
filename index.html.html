@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BookEquip.Kab - Lab Equipment Booking</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, sans-serif; }
+  body { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; color: #333; }
+
+  /* Top Navigation */
+  .topbar {
+    background: #1a1a2e; color: white; padding: 15px 30px;
+    display: flex; justify-content: space-between; align-items: center;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+  }
+  .logo {
+    display: flex; align-items: center; gap: 12px;
+    font-size: 1.5rem; font-weight: bold;
+  }
+  .logo-icon {
+    background: linear-gradient(135deg, #f093fb, #f5576c);
+    width: 45px; height: 45px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1rem; font-weight: bold;
+  }
+  .nav-links { display: flex; gap: 20px; align-items: center; }
+  .nav-links button {
+    background: transparent; color: white; border: none;
+    padding: 8px 16px; cursor: pointer; font-size: 0.95rem;
+    border-radius: 6px; transition: 0.3s;
+  }
+  .nav-links button:hover { background: rgba(255,255,255,0.15); }
+  .nav-links button.active { background: #f5576c; }
+  .user-info { font-size: 0.9rem; opacity: 0.9; }
+
+  /* Page Containers */
+  .page { display: none; padding: 30px; max-width: 1200px; margin: 0 auto; }
+  .page.active { display: block; }
+
+  /* Login Page */
+  .login-container {
+    max-width: 450px; margin: 60px auto; background: white;
+    padding: 40px; border-radius: 15px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+  }
+  .login-container h2 { text-align: center; margin-bottom: 10px; color: #1a1a2e; }
+  .login-container .subtitle { text-align: center; color: #666; margin-bottom: 25px; }
+  .role-toggle {
+    display: flex; gap: 10px; margin-bottom: 20px;
+  }
+  .role-toggle button {
+    flex: 1; padding: 12px; border: 2px solid #667eea;
+    background: white; color: #667eea; cursor: pointer;
+    border-radius: 8px; font-weight: 600; transition: 0.3s;
+  }
+  .role-toggle button.active {
+    background: #667eea; color: white;
+  }
+  .form-group { margin-bottom: 18px; }
+  .form-group label { display: block; margin-bottom: 6px; font-weight: 600; color: #444; }
+  .form-group input, .form-group select, .form-group textarea {
+    width: 100%; padding: 12px; border: 2px solid #e0e0e0;
+    border-radius: 8px; font-size: 1rem; transition: 0.3s;
+  }
+  .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+    outline: none; border-color: #667eea;
+  }
+  .btn {
+    width: 100%; padding: 13px; background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white; border: none; border-radius: 8px; font-size: 1rem;
+    font-weight: 600; cursor: pointer; transition: 0.3s;
+  }
+  .btn:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(102,126,234,0.4); }
+  .btn-secondary {
+    background: transparent; color: #667eea; border: 2px solid #667eea;
+  }
+  .btn-danger { background: linear-gradient(135deg, #f5576c, #f093fb); }
+  .switch-link { text-align: center; margin-top: 15px; color: #666; }
+  .switch-link a { color: #667eea; cursor: pointer; font-weight: 600; text-decoration: none; }
+
+  /* Dashboard Cards */
+  .stats-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 20px; margin-bottom: 30px;
+  }
+  .stat-card {
+    background: white; padding: 25px; border-radius: 12px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+    display: flex; align-items: center; gap: 15px;
+    transition: 0.3s;
+  }
+  .stat-card:hover { transform: translateY(-5px); box-shadow: 0 10px 30px rgba(0,0,0,0.15); }
+  .stat-icon {
+    width: 60px; height: 60px; border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.8rem; color: white;
+  }
+  .stat-icon.blue { background: linear-gradient(135deg, #667eea, #764ba2); }
+  .stat-icon.green { background: linear-gradient(135deg, #11998e, #38ef7d); }
+  .stat-icon.orange { background: linear-gradient(135deg, #f093fb, #f5576c); }
+  .stat-icon.purple { background: linear-gradient(135deg, #4facfe, #00f2fe); }
+  .stat-info h3 { font-size: 2rem; color: #1a1a2e; }
+  .stat-info p { color: #666; font-size: 0.9rem; }
+
+  /* Booking Form */
+  .booking-card {
+    background: white; padding: 30px; border-radius: 12px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.1); margin-bottom: 25px;
+  }
+  .booking-card h2 { color: #1a1a2e; margin-bottom: 20px; }
+  .equip-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 15px; margin-bottom: 20px;
+  }
+  .equip-item {
+    border: 2px solid #e0e0e0; padding: 15px; border-radius: 10px;
+    text-align: center; cursor: pointer; transition: 0.3s;
+  }
+  .equip-item:hover { border-color: #667eea; }
+  .equip-item.selected { border-color: #667eea; background: #f0f4ff; }
+  .equip-item.unavailable { opacity: 0.5; cursor: not-allowed; }
+  .equip-item .emoji { font-size: 2.5rem; margin-bottom: 8px; }
+  .equip-item .name { font-weight: 600; margin-bottom: 4px; }
+  .equip-item .stock { font-size: 0.85rem; color: #666; }
+
+  /* Tables */
+  .table-card {
+    background: white; padding: 25px; border-radius: 12px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.1); overflow-x: auto;
+  }
+  table { width: 100%; border-collapse: collapse; }
+  th { background: #1a1a2e; color: white; padding: 12px; text-align: left; }
+  td { padding: 12px; border-bottom: 1px solid #eee; }
+  tr:hover { background: #f9f9f9; }
+  .status-badge {
+    padding: 4px 10px; border-radius: 12px; font-size: 0.8rem; font-weight: 600;
+  }
+  .status-active { background: #fff4e6; color: #ff9800; }
+  .status-returned { background: #e8f5e9; color: #4caf50; }
+  .action-btn {
+    padding: 6px 12px; background: #11998e; color: white; border: none;
+    border-radius: 6px; cursor: pointer; font-size: 0.85rem;
+  }
+  .action-btn:hover { background: #0d7a6f; }
+
+  .section-title {
+    color: white; margin-bottom: 20px; font-size: 1.8rem;
+  }
+  .hidden { display: none !important; }
+
+  .alert {
+    padding: 12px; border-radius: 8px; margin-bottom: 15px;
+    font-size: 0.95rem;
+  }
+  .alert-success { background: #e8f5e9; color: #2e7d32; border-left: 4px solid #4caf50; }
+  .alert-error { background: #ffebee; color: #c62828; border-left: 4px solid #f44336; }
+</style>
+</head>
+<body>
+
+<!-- LOGIN PAGE -->
+<div id="loginPage" class="page active">
+  <div class="login-container">
+    <h2 id="formTitle">🔐 Login to BookEquip.Kab</h2>
+    <p class="subtitle" id="formSubtitle">Book lab equipment for study purposes</p>
+
+    <div class="role-toggle">
+      <button id="studentBtn" class="active" onclick="switchRole('student')">🎓 Student</button>
+      <button id="lecturerBtn" onclick="switchRole('lecturer')">👨‍🏫 Lecturer</button>
+    </div>
+
+    <div id="alertBox"></div>
+
+    <form id="authForm" onsubmit="handleAuth(event)">
+      <div class="form-group">
+        <label>Full Name</label>
+        <input type="text" id="authName" required placeholder="Enter your full name">
+      </div>
+      <div class="form-group" id="idGroup">
+        <label id="idLabel">Registration Number</label>
+        <input type="text" id="authId" required placeholder="e.g. KAB/2024/001">
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="authPassword" required placeholder="Enter password">
+      </div>
+      <button type="submit" class="btn" id="authSubmitBtn">Login</button>
+    </form>
+
+    <p class="switch-link">
+      <span id="switchText">Don't have an account?</span>
+      <a onclick="toggleAuthMode()" id="switchLink">Create Account</a>
+    </p>
+  </div>
+</div>
+
+<!-- MAIN APP (hidden until login) -->
+<div id="mainApp" class="hidden">
+  <div class="topbar">
+    <div class="logo">
+      <div class="logo-icon">BE.K</div>
+      <span>BookEquip.Kab</span>
+    </div>
+    <div class="nav-links">
+      <button id="navHome" class="active" onclick="showPage('home')">🏠 Home</button>
+      <button id="navBooking" onclick="showPage('booking')">📝 Booking</button>
+      <button id="navAdmin" onclick="showPage('admin')">⚙️ Admin Dashboard</button>
+      <span class="user-info" id="userDisplay"></span>
+      <button onclick="logout()" style="background:#f5576c;">Logout</button>
+    </div>
+  </div>
+
+  <!-- HOME PAGE -->
+  <div id="homePage" class="page active">
+    <h2 class="section-title">📊 Dashboard Overview</h2>
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon blue">📦</div>
+        <div class="stat-info">
+          <h3 id="statTotal">0</h3>
+          <p>Total Equipment in Lab</p>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon green">✅</div>
+        <div class="stat-info">
+          <h3 id="statAvailable">0</h3>
+          <p>Available Equipment</p>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon orange">📋</div>
+        <div class="stat-info">
+          <h3 id="statBooked">0</h3>
+          <p>Equipment Booked</p>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon purple">🔄</div>
+        <div class="stat-info">
+          <h3 id="statReturned">0</h3>
+          <p>Equipment Returned</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="booking-card">
+      <h2>🎯 Quick Actions</h2>
+      <p style="color:#666; margin-bottom:20px;">Manage your lab equipment bookings efficiently.</p>
+      <div style="display:flex; gap:15px; flex-wrap:wrap;">
+        <button class="btn" style="width:auto; padding:12px 25px;" onclick="showPage('booking')">📝 Book Equipment</button>
+        <button class="btn btn-secondary" style="width:auto; padding:12px 25px;" onclick="showPage('admin')">⚙️ Admin Dashboard</button>
+      </div>
+    </div>
+
+    <div class="table-card">
+      <h2 style="margin-bottom:15px;">📜 Your Recent Bookings</h2>
+      <table>
+        <thead>
+          <tr><th>Equipment</th><th>Date Booked</th><th>Due Date</th><th>Status</th></tr>
+        </thead>
+        <tbody id="myBookingsTable"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- BOOKING PAGE -->
+  <div id="bookingPage" class="page">
+    <h2 class="section-title">📝 Book Equipment</h2>
+    <div class="booking-card">
+      <h2>Select Equipment</h2>
+      <p style="color:#666; margin-bottom:20px;">Choose the items you need for your study session.</p>
+      <div class="equip-grid" id="equipGrid"></div>
+
+      <h2 style="margin-top:20px;">Booking Details</h2>
+      <div id="bookingAlert"></div>
+      <form onsubmit="submitBooking(event)" style="margin-top:15px;">
+        <div class="form-group">
+          <label>Purpose of Booking</label>
+          <textarea id="bookingPurpose" rows="3" required placeholder="e.g. Group project study session, Lab assignment..."></textarea>
+        </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px;">
+          <div class="form-group">
+            <label>Start Date</label>
+            <input type="date" id="bookingStart" required>
+          </div>
+          <div class="form-group">
+            <label>Return Date</label>
+            <input type="date" id="bookingEnd" required>
+          </div>
+        </div>
+        <button type="submit" class="btn">Confirm Booking</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ADMIN PAGE -->
+  <div id="adminPage" class="page">
+    <h2 class="section-title">⚙️ Admin Dashboard</h2>
+    <div class="booking-card">
+      <h2>📦 Manage Equipment Inventory</h2>
+      <p style="color:#666; margin-bottom:20px;">Update stock quantities for each item.</p>
+      <div id="adminInventory"></div>
+    </div>
+
+    <div class="table-card">
+      <h2 style="margin-bottom:15px;">📋 All Bookings</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>User</th><th>Role</th><th>Equipment</th>
+            <th>Qty</th><th>Purpose</th><th>Start</th><th>Due</th><th>Status</th><th>Action</th>
+          </tr>
+        </thead>
+        <tbody id="allBookingsTable"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ===== DATA LAYER =====
+  const DEFAULT_INVENTORY = {
+    projector:  { name: 'Projector',     emoji: '📽️', total: 5 },
+    laptop:     { name: 'Laptop',        emoji: '💻', total: 10 },
+    mouse:      { name: 'Mouse',         emoji: '🖱️', total: 20 },
+    keyboard:   { name: 'Keyboard',      emoji: '⌨️', total: 20 },
+    printer:    { name: 'Printer',       emoji: '🖨️', total: 4 },
+    systemUnit: { name: 'Old System Unit', emoji: '🖥️', total: 8 }
+  };
+
+  function loadData(key, fallback) {
+    const d = localStorage.getItem('bek_' + key);
+    return d ? JSON.parse(d) : fallback;
+  }
+  function saveData(key, data) {
+    localStorage.setItem('bek_' + key, JSON.stringify(data));
+  }
+
+  let users = loadData('users', []);
+  let inventory = loadData('inventory', DEFAULT_INVENTORY);
+  let bookings = loadData('bookings', []);
+  let currentUser = loadData('currentUser', null);
+
+  let authMode = 'login';   // login | register
+  let authRole = 'student'; // student | lecturer
+  let selectedEquip = [];
+
+  // ===== AUTH =====
+  function switchRole(role) {
+    authRole = role;
+    document.getElementById('studentBtn').classList.toggle('active', role === 'student');
+    document.getElementById('lecturerBtn').classList.toggle('active', role === 'lecturer');
+    document.getElementById('idLabel').textContent = role === 'student' ? 'Registration Number' : 'ID Number';
+    document.getElementById('authId').placeholder = role === 'student' ? 'e.g. KAB/2024/001' : 'e.g. LEC/001';
+  }
+
+  function toggleAuthMode() {
+    authMode = authMode === 'login' ? 'register' : 'login';
+    document.getElementById('formTitle').textContent = authMode === 'login' ? '🔐 Login to BookEquip.Kab' : '📝 Create Account';
+    document.getElementById('formSubtitle').textContent = authMode === 'login' ? 'Book lab equipment for study purposes' : 'Join BookEquip.Kab today';
+    document.getElementById('authSubmitBtn').textContent = authMode === 'login' ? 'Login' : 'Create Account';
+    document.getElementById('switchText').textContent = authMode === 'login' ? "Don't have an account?" : 'Already have an account?';
+    document.getElementById('switchLink').textContent = authMode === 'login' ? 'Create Account' : 'Login';
+    document.getElementById('alertBox').innerHTML = '';
+  }
+
+  function showAlert(containerId, msg, type) {
+    document.getElementById(containerId).innerHTML =
+      `<div class="alert alert-${type}">${msg}</div>`;
+    setTimeout(() => document.getElementById(containerId).innerHTML = '', 4000);
+  }
+
+  function handleAuth(e) {
+    e.preventDefault();
+    const name = document.getElementById('authName').value.trim();
+    const id = document.getElementById('authId').value.trim();
+    const pw = document.getElementById('authPassword').value;
+
+    if (authMode === 'register') {
+      if (users.find(u => u.id === id && u.role === authRole)) {
+        return showAlert('alertBox', 'Account already exists with this ID.', 'error');
+      }
+      users.push({ name, id, role: authRole, password: pw });
+      saveData('users', users);
+      showAlert('alertBox', 'Account created! Please login.', 'success');
+      toggleAuthMode();
+    } else {
+      const user = users.find(u => u.id === id && u.role === authRole && u.password === pw);
+      if (!user) return showAlert('alertBox', 'Invalid credentials. Please try again.', 'error');
+      currentUser = user;
+      saveData('currentUser', user);
+      enterApp();
+    }
+  }
+
+  function enterApp() {
+    document.getElementById('loginPage').classList.remove('active');
+    document.getElementById('loginPage').style.display = 'none';
+    document.getElementById('mainApp').classList.remove('hidden');
+    document.getElementById('userDisplay').textContent =
+      `👤 ${currentUser.name} (${currentUser.role === 'student' ? '🎓' : '👨‍🏫'} ${currentUser.id})`;
+    refreshAll();
+  }
+
+  function logout() {
+    currentUser = null;
+    localStorage.removeItem('bek_currentUser');
+    document.getElementById('mainApp').classList.add('hidden');
+    document.getElementById('loginPage').style.display = 'block';
+    document.getElementById('loginPage').classList.add('active');
+    document.getElementById('authForm').reset();
+  }
+
+  // ===== NAVIGATION =====
+  function showPage(page) {
+    ['home', 'booking', 'admin'].forEach(p => {
+      document.getElementById(p + 'Page').classList.remove('active');
+      document.getElementById('nav' + p.charAt(0).toUpperCase() + p.slice(1)).classList.remove('active');
+    });
+    document.getElementById(page + 'Page').classList.add('active');
+    document.getElementById('nav' + page.charAt(0).toUpperCase() + page.slice(1)).classList.add('active');
+    if (page === 'booking') renderEquipGrid();
+    if (page === 'admin') renderAdmin();
+    if (page === 'home') refreshHome();
+  }
+
+  // ===== STATS =====
+  function computeStats() {
+    let total = 0, booked = 0, returned = 0;
+    Object.values(inventory).forEach(it => total += it.total);
+    bookings.forEach(b => {
+      if (b.status === 'returned') returned += b.quantity;
+      else booked += b.quantity;
+    });
+    const available = total - booked;
+    return { total, booked, returned, available };
+  }
+
+  function refreshHome() {
+    const s = computeStats();
+    document.getElementById('statTotal').textContent = s.total;
+    document.getElementById('statAvailable').textContent = s.available;
+    document.getElementById('statBooked').textContent = s.booked;
+    document.getElementById('statReturned').textContent = s.returned;
+
+    const myBookings = bookings.filter(b => b.userId === currentUser.id);
+    const tbody = document.getElementById('myBookingsTable');
+    if (myBookings.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#999;">No bookings yet.</td></tr>';
+    } else {
+      tbody.innerHTML = myBookings.map(b => `
+        <tr>
+          <td>${inventory[b.equipKey].emoji} ${inventory[b.equipKey].name} (x${b.quantity})</td>
+          <td>${b.startDate}</td>
+          <td>${b.endDate}</td>
+          <td><span class="status-badge status-${b.status}">${b.status.toUpperCase()}</span></td>
+        </tr>
+      `).join('');
+    }
+  }
+
+  // ===== BOOKING =====
+  function renderEquipGrid() {
+    const grid = document.getElementById('equipGrid');
+    const bookedCount = {};
+    bookings.forEach(b => {
+      if (b.status === 'active') bookedCount[b.equipKey] = (bookedCount[b.equipKey] || 0) + b.quantity;
+    });
+    grid.innerHTML = Object.keys(inventory).map(key => {
+      const it = inventory[key];
+      const avail = it.total - (bookedCount[key] || 0);
+      const sel = selectedEquip.includes(key);
+      const dis = avail <= 0;
+      return `
+        <div class="equip-item ${sel ? 'selected' : ''} ${dis ? 'unavailable' : ''}"
+             onclick="${dis ? '' : `toggleEquip('${key}')`}">
+          <div class="emoji">${it.emoji}</div>
+          <div class="name">${it.name}</div>
+          <div class="stock">${dis ? 'Out of stock' : avail + ' available'}</div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function toggleEquip(key) {
+    if (selectedEquip.includes(key)) selectedEquip = selectedEquip.filter(k => k !== key);
+    else selectedEquip.push(key);
+    renderEquipGrid();
+  }
+
+  function submitBooking(e) {
+    e.preventDefault();
+    if (selectedEquip.length === 0) {
+      return showAlert('bookingAlert', 'Please select at least one equipment.', 'error');
+    }
+    const purpose = document.getElementById('bookingPurpose').value;
+    const start = document.getElementById('bookingStart').value;
+    const end = document.getElementById('bookingEnd').value;
+    if (new Date(end) < new Date(start)) {
+      return showAlert('bookingAlert', 'Return date must be after start date.', 'error');
+    }
+
+    // Create booking for each selected equipment (quantity = 1 each)
+    selectedEquip.forEach(key => {
+      bookings.push({
+        id: 'BK' + Date.now() + Math.floor(Math.random() * 1000),
+        userId: currentUser.id,
+        userName: currentUser.name,
+        userRole: currentUser.role,
+        equipKey: key,
+        quantity: 1,
+        purpose, startDate: start, endDate: end,
+        status: 'active',
+        createdAt: new Date().toISOString()
+      });
+    });
+    saveData('bookings', bookings);
+    selectedEquip = [];
+    showAlert('bookingAlert', '✅ Booking confirmed successfully!', 'success');
+    document.getElementById('bookingPurpose').value = '';
+    document.getElementById('bookingStart').value = '';
+    document.getElementById('bookingEnd').value = '';
+    renderEquipGrid();
+  }
+
+  // ===== ADMIN =====
+  function renderAdmin() {
+    const inv = document.getElementById('adminInventory');
+    const bookedCount = {};
+    bookings.forEach(b => {
+      if (b.status === 'active') bookedCount[b.equipKey] = (bookedCount[b.equipKey] || 0) + b.quantity;
+    });
+    inv.innerHTML = `
+      <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(200px, 1fr)); gap:15px;">
+        ${Object.keys(inventory).map(key => {
+          const it = inventory[key];
+          const booked = bookedCount[key] || 0;
+          return `
+            <div style="border:2px solid #e0e0e0; padding:15px; border-radius:10px;">
+              <div style="font-size:2rem; text-align:center;">${it.emoji}</div>
+              <div style="text-align:center; font-weight:600; margin:8px 0;">${it.name}</div>
+              <label style="font-size:0.85rem; color:#666;">Total Stock</label>
+              <input type="number" min="0" value="${it.total}"
+                onchange="updateStock('${key}', this.value)"
+                style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px; margin-top:4px;">
+              <div style="font-size:0.85rem; margin-top:8px; color:#666;">
+                Booked: <b style="color:#ff9800;">${booked}</b> |
+                Available: <b style="color:#4caf50;">${it.total - booked}</b>
+              </div>
+            </div>
+          `;
+        }).join('')}
+      </div>
+    `;
+
+    const tbody = document.getElementById('allBookingsTable');
+    if (bookings.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="9" style="text-align:center; color:#999;">No bookings yet.</td></tr>';
+    } else {
+      tbody.innerHTML = bookings.slice().reverse().map(b => `
+        <tr>
+          <td>${b.userName}</td>
+          <td>${b.userRole === 'student' ? '🎓 Student' : '👨‍🏫 Lecturer'}</td>
+          <td>${inventory[b.equipKey].emoji} ${inventory[b.equipKey].name}</td>
+          <td>${b.quantity}</td>
+          <td>${b.purpose}</td>
+          <td>${b.startDate}</td>
+          <td>${b.endDate}</td>
+          <td><span class="status-badge status-${b.status}">${b.status.toUpperCase()}</span></td>
+          <td>${b.status === 'active'
+            ? `<button class="action-btn" onclick="returnItem('${b.id}')">Mark Returned</button>`
+            : '—'}</td>
+        </tr>
+      `).join('');
+    }
+  }
+
+  function updateStock(key, value) {
+    inventory[key].total = parseInt(value) || 0;
+    saveData('inventory', inventory);
+    renderAdmin();
+  }
+
+  function returnItem(id) {
+    const b = bookings.find(x => x.id === id);
+    if (b) {
+      b.status = 'returned';
+      saveData('bookings', bookings);
+      renderAdmin();
+    }
+  }
+
+  function refreshAll() {
+    refreshHome();
+    renderEquipGrid();
+    renderAdmin();
+  }
+
+  // ===== INIT =====
+  if (currentUser) enterApp();
+
+  // Set min date for booking
+  document.getElementById('bookingStart').min = new Date().toISOString().split('T')[0];
+  document.getElementById('bookingEnd').min = new Date().toISOString().split('T')[0];
+</script>
+
+</body>
+</html>
